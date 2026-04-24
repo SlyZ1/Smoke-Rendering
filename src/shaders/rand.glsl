@@ -24,3 +24,29 @@ float rand_bn(ivec2 pixel, int frame) {
 
     return texelFetch(blueNoise, coord, 0).r;
 }
+
+vec2 randomInCircle(inout uint seed) {
+    float u = rand(seed);
+    float v = rand(seed);
+
+    float theta = 2.0 * PI * u;
+    float r     = sqrt(v);
+
+    float x = r * cos(theta);
+    float y = r * sin(theta);
+
+    return vec2(x, y);
+}
+
+vec2 randomInCircle_bn(float bnoise1, float bnoise2) {
+    float u = bnoise1;
+    float v = bnoise2;
+
+    float theta = 2.0 * PI * u;
+    float r     = sqrt(v);
+
+    float x = r * cos(theta);
+    float y = r * sin(theta);
+
+    return vec2(x, y);
+}

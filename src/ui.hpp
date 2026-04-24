@@ -1,4 +1,7 @@
 #include "app.hpp"
+#include <glm/glm.hpp>
+
+using namespace glm;
 
 class UI {
     private:
@@ -8,8 +11,10 @@ class UI {
         // App
 
         // Render
-        float m_stepSize = 0.1;
+        float m_sigma_t = 1;
+        float m_stepSize = 0.4;
         bool m_useNoise = true;
+        vec3 backgroundColor = vec3(0.655, 0.780, 0.906);
 
         // Simulation
 

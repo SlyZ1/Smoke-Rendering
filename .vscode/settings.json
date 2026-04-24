@@ -47,5 +47,6 @@
         "typeinfo": "cpp",
         "fstream": "cpp",
         "sstream": "cpp"
-    }
+    },
+    "cmake.sourceDirectory": "C:/Users/conta/Documents/Dev/CPP/SmokeSimulation/include/glm"
 }

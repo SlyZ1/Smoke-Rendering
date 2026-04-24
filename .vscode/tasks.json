@@ -11,6 +11,7 @@
                 "-I${workspaceFolder}/include/",
                 "-I${workspaceFolder}/include/imgui",
                 "-I${workspaceFolder}/include/stb_image",
+                "-I${workspaceFolder}/include/Eigen",
 
                 "-L${workspaceFolder}/lib",
 
@@ -19,7 +20,7 @@
                 "${workspaceFolder}/src/glad.c",
 
                 "-lglfw3dll",
-
+                
                 "-o",
                 "${workspaceFolder}/myprogram.exe",
 

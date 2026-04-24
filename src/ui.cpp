@@ -36,6 +36,15 @@ void UI::renderRender(){
     ImGui::SliderFloat("##Step size", &m_stepSize, 0.001f, .4f);
     Label("Use noise");
     ImGui::Checkbox("##Use noise", &m_useNoise);
+    
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    Label("Sigma_t");
+    ImGui::DragFloat("##Sigma_t", &m_sigma_t);
+    m_sigma_t = std::max(m_sigma_t, 0.000f);
+    Label("Background color");
+    ImGui::ColorEdit3("##Background color", &backgroundColor.r);
 
     EndTwoColumnLayout();
 }
@@ -78,8 +87,8 @@ void UI::render(){
 }
 
 void UI::updateGPU(GLuint shaderProgramId){
-    int stepSizeLoc = glGetUniformLocation(shaderProgramId, "stepSize");
-    glUniform1f(stepSizeLoc, m_stepSize);
-    int useNoiseLoc = glGetUniformLocation(shaderProgramId, "useNoise");
-    glUniform1i(useNoiseLoc, m_useNoise);
+    glUniform1f(glGetUniformLocation(shaderProgramId, "stepSize"), m_stepSize);
+    glUniform1i(glGetUniformLocation(shaderProgramId, "useNoise"), m_useNoise);
+    glUniform1f(glGetUniformLocation(shaderProgramId, "sigma_t"), m_sigma_t);
+    glUniform3f(glGetUniformLocation(shaderProgramId, "backgroundColor"), backgroundColor.r, backgroundColor.g, backgroundColor.b);
 }
