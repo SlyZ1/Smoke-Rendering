@@ -19,6 +19,9 @@ ShaderProgram shaderProg;
 
 GLuint blueNoiseTexture;
 GLuint scalarFlowDensityTexture;
+GLuint aTableTexture;
+GLuint bTableTexture;
+float maxDensityMagnitude;
 glm::vec4 zhCoeffs;
 
 Camera camera(0.02, 0.25);
@@ -63,10 +66,34 @@ void loadScalarFlowDensity(const string& densityName){
     glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, X, Y, Z, 0, GL_RED, GL_FLOAT, density.data());
 }
 
-void loadZonalCoeffs(){
+void loadShData(){
+    // ZONAL COEFFS
     string path = "src/preprocess/zh.bin";
     ifstream f(path, std::ios::binary);
     f.read(reinterpret_cast<char*>(&zhCoeffs), sizeof(glm::vec4));
+
+    // EPX* DATA
+    const int tableSize = 256;
+    vector<float> expData(2*tableSize + 1);
+    string path_exp = "src/preprocess/exp_data.bin";
+    ifstream f_exp(path_exp, std::ios::binary);
+    f_exp.read(reinterpret_cast<char*>(expData.data()), expData.size() * sizeof(float));
+    maxDensityMagnitude = expData[0];
+
+    vector<float> aTable(expData.begin() + 1, expData.begin() + tableSize + 1);
+    vector<float> bTable(expData.begin() + tableSize + 1, expData.end());
+
+    glGenTextures(1, &aTableTexture);
+    glBindTexture(GL_TEXTURE_1D, aTableTexture);
+    glTexImage1D(GL_TEXTURE_1D, 0, GL_R32F, tableSize, 0, GL_RED, GL_FLOAT, aTable.data());
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glGenTextures(1, &bTableTexture);
+    glBindTexture(GL_TEXTURE_1D, bTableTexture);
+    glTexImage1D(GL_TEXTURE_1D, 0, GL_R32F, tableSize, 0, GL_RED, GL_FLOAT, bTable.data());
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
 void init(){
@@ -96,7 +123,7 @@ void init(){
     
     loadBlueNoise();
     loadScalarFlowDensity("density.bin");
-    loadZonalCoeffs();
+    loadShData();
 }
 
 void handleCamera(){
@@ -140,6 +167,19 @@ void render(){
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_3D, scalarFlowDensityTexture);
     glUniform1i(densityTextureLoc, 1);
+
+    GLuint aTableTextureLoc = glGetUniformLocation(shaderProg.id(), "aTable");
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_1D, aTableTexture);
+    glUniform1i(aTableTextureLoc, 2);
+
+    GLuint bTableTextureLoc = glGetUniformLocation(shaderProg.id(), "bTable");
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_1D, bTableTexture);
+    glUniform1i(bTableTextureLoc, 3);
+
+    GLuint maxDensityMagLoc = glGetUniformLocation(shaderProg.id(), "maxDensityMagnitude");
+    glUniform1f(maxDensityMagLoc, maxDensityMagnitude);
 
     GLuint zhCoeffsLoc = glGetUniformLocation(shaderProg.id(), "zhCoeffs");
     glUniform4f(zhCoeffsLoc, zhCoeffs[0], zhCoeffs[1], zhCoeffs[2], zhCoeffs[3]);

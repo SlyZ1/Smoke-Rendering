@@ -38,13 +38,20 @@ uniform bool useNoise;
 uniform sampler2D blueNoise;
 
 uniform vec4 zhCoeffs;
+uniform sampler1D aTable;
+uniform sampler1D bTable;
+uniform float maxDensityMagnitude; 
 
 #define PI 3.14159265
+#define PI_4_SQRT 3.544907702
+
+float one[16] = float[16](PI_4_SQRT, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
 #pragma include "./rand.glsl"
 #pragma include "./intersections.glsl"
-#pragma include "./sh.glsl"
 #pragma include "./sh_triple_product.glsl"
+#pragma include "./sh_conv.glsl"
+#pragma include "./sh.glsl"
 
 #pragma FDECLARE
 // RAND.GLSL
@@ -60,7 +67,12 @@ bool isInAABB(vec3 point, AABB box);
 
 // SH.GLSL
 void sh_order3(vec3 d, out float sh[16]);
-void sh_triple_product3(float f[16], float g[16], out result[16]);
+
+// SH_TRIPLE_PRODUCT.GLSL
+void sh_triple_product3(float f[16], float g[16], out float result[16]);
+
+// SH_CONV.GLSL
+void sh_conv3(float f[16], float g[16], out float result[16]);
 #pragma FEND
 
 float beerLambert(float dx, float D){
@@ -69,11 +81,21 @@ float beerLambert(float dx, float D){
 
 float sampleScalarFlowDensity(vec3 pos, AABB box){
     vec3 uvw = (pos - box.min) / (box.max - box.min);
-    return texture(densityTexture, uvw).r * 50;
+    return texture(densityTexture, uvw).r * 20;
 }
 
 vec3 J(Ray ray, AABB box, inout NoiseData nd){
     return vec3(1);
+}
+
+vec3 L_debug(Ray ray, AABB box, inout NoiseData nd){
+    float dx = max(stepSize, 1e-4);
+    float accumulated = 0.0;
+    while(isInAABB(ray.origin, box)){
+        accumulated += sampleScalarFlowDensity(ray.origin, box) * dx;
+        ray.origin += ray.dir * dx;
+    }
+    return vec3(accumulated);
 }
 
 vec3 L(Ray ray, AABB box, inout NoiseData nd) {
@@ -101,7 +123,7 @@ vec3 L(Ray ray, AABB box, inout NoiseData nd) {
         ray.origin += ray.dir * dx;
     }
     vec3 Ld = t_x * backgroundColor;
-
+    //return vec3(1 - t_x);
     return Lm + Ld;
 }
 
@@ -149,7 +171,6 @@ void main()
     vec2 pos = ratio(vClipPos.xy);
     vec2 uv = (vClipPos.xy + vec2(1)) * 0.5;
     float bnoise1 = rand_bn(ivec2(ratio(uv) * texSize.y), int(frame));
-    float bnoise2 = rand_bn(ivec2(ratio(uv) * texSize.y), int(frame + 1));
     NoiseData nd = NoiseData(bnoise1, seed);
 
     Ray ray;

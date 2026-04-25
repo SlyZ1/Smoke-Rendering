@@ -11,8 +11,8 @@ class UI {
         // App
 
         // Render
-        float m_sigma_t = 1;
-        float m_stepSize = 0.4;
+        float m_sigma_t = 50;
+        float m_stepSize = 0.05;
         bool m_useNoise = true;
         vec3 backgroundColor = vec3(0.655, 0.780, 0.906);
 

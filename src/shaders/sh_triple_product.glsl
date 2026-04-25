@@ -1,5 +1,5 @@
 void sh_triple_product3(float f[16], float g[16], out float result[16]){
-	result[0] += 0.282095 * f[0] * g[0];
+	result[0] = 0.282095 * f[0] * g[0];
 	result[0] += -0.282095 * f[1] * g[3];
 	result[0] += 0.282095 * f[2] * g[2];
 	result[0] += -0.282095 * f[3] * g[1];
@@ -15,7 +15,7 @@ void sh_triple_product3(float f[16], float g[16], out float result[16]){
 	result[0] += -0.282095 * f[13] * g[11];
 	result[0] += 0.282095 * f[14] * g[10];
 	result[0] += -0.282095 * f[15] * g[9];
-	result[1] += -0.282095 * f[0] * g[3];
+	result[1] = -0.282095 * f[0] * g[3];
 	result[1] += 0.309019 * f[1] * g[8];
 	result[1] += -0.218510 * f[2] * g[7];
 	result[1] += -0.282095 * f[3] * g[0];
@@ -33,7 +33,7 @@ void sh_triple_product3(float f[16], float g[16], out float result[16]){
 	result[1] += -0.202301 * f[13] * g[6];
 	result[1] += 0.261169 * f[14] * g[5];
 	result[1] += -0.319865 * f[15] * g[4];
-	result[2] += 0.282095 * f[0] * g[2];
+	result[2] = 0.282095 * f[0] * g[2];
 	result[2] += -0.218510 * f[1] * g[7];
 	result[2] += 0.282095 * f[2] * g[0];
 	result[2] += 0.252313 * f[2] * g[6];
@@ -51,7 +51,7 @@ void sh_triple_product3(float f[16], float g[16], out float result[16]){
 	result[2] += 0.247767 * f[12] * g[6];
 	result[2] += -0.233597 * f[13] * g[5];
 	result[2] += 0.184674 * f[14] * g[4];
-	result[3] += -0.282095 * f[0] * g[1];
+	result[3] = -0.282095 * f[0] * g[1];
 	result[3] += -0.282095 * f[1] * g[0];
 	result[3] += 0.126157 * f[1] * g[6];
 	result[3] += -0.218510 * f[2] * g[5];
@@ -69,7 +69,7 @@ void sh_triple_product3(float f[16], float g[16], out float result[16]){
 	result[3] += -0.202301 * f[11] * g[6];
 	result[3] += 0.143048 * f[12] * g[5];
 	result[3] += -0.082589 * f[13] * g[4];
-	result[4] += 0.282095 * f[0] * g[8];
+	result[4] = 0.282095 * f[0] * g[8];
 	result[4] += -0.319865 * f[1] * g[15];
 	result[4] += 0.184674 * f[2] * g[14];
 	result[4] += 0.309019 * f[3] * g[3];
@@ -86,7 +86,7 @@ void sh_triple_product3(float f[16], float g[16], out float result[16]){
 	result[4] += -0.188063 * f[14] * g[12];
 	result[4] += -0.319865 * f[15] * g[1];
 	result[4] += 0.132981 * f[15] * g[11];
-	result[5] += -0.282095 * f[0] * g[7];
+	result[5] = -0.282095 * f[0] * g[7];
 	result[5] += 0.261169 * f[1] * g[14];
 	result[5] += -0.218510 * f[2] * g[3];
 	result[5] += -0.233597 * f[2] * g[13];
@@ -106,7 +106,7 @@ void sh_triple_product3(float f[16], float g[16], out float result[16]){
 	result[5] += 0.261169 * f[14] * g[1];
 	result[5] += 0.162868 * f[14] * g[11];
 	result[5] += -0.210261 * f[15] * g[10];
-	result[6] += 0.282095 * f[0] * g[6];
+	result[6] = 0.282095 * f[0] * g[6];
 	result[6] += 0.126157 * f[1] * g[3];
 	result[6] += -0.202301 * f[1] * g[13];
 	result[6] += 0.252313 * f[2] * g[2];
@@ -127,7 +127,7 @@ void sh_triple_product3(float f[16], float g[16], out float result[16]){
 	result[6] += -0.202301 * f[13] * g[1];
 	result[6] += -0.126157 * f[13] * g[11];
 	result[6] += 0.210261 * f[15] * g[9];
-	result[7] += -0.282095 * f[0] * g[5];
+	result[7] = -0.282095 * f[0] * g[5];
 	result[7] += -0.218510 * f[1] * g[2];
 	result[7] += 0.143048 * f[1] * g[12];
 	result[7] += -0.218510 * f[2] * g[1];
@@ -147,7 +147,7 @@ void sh_triple_product3(float f[16], float g[16], out float result[16]){
 	result[7] += -0.059471 * f[12] * g[11];
 	result[7] += 0.162868 * f[13] * g[10];
 	result[7] += -0.210261 * f[14] * g[9];
-	result[8] += 0.282095 * f[0] * g[4];
+	result[8] = 0.282095 * f[0] * g[4];
 	result[8] += 0.309019 * f[1] * g[1];
 	result[8] += -0.082589 * f[1] * g[11];
 	result[8] += 0.184674 * f[2] * g[10];
@@ -164,7 +164,7 @@ void sh_triple_product3(float f[16], float g[16], out float result[16]){
 	result[8] += 0.206013 * f[11] * g[11];
 	result[8] += -0.188063 * f[12] * g[10];
 	result[8] += 0.132981 * f[13] * g[9];
-	result[9] += -0.282095 * f[0] * g[15];
+	result[9] = -0.282095 * f[0] * g[15];
 	result[9] += -0.319865 * f[3] * g[8];
 	result[9] += 0.210261 * f[6] * g[15];
 	result[9] += -0.210261 * f[7] * g[14];
@@ -174,7 +174,7 @@ void sh_triple_product3(float f[16], float g[16], out float result[16]){
 	result[9] += -0.210261 * f[14] * g[7];
 	result[9] += -0.282095 * f[15] * g[0];
 	result[9] += 0.210261 * f[15] * g[6];
-	result[10] += 0.282095 * f[0] * g[14];
+	result[10] = 0.282095 * f[0] * g[14];
 	result[10] += 0.184674 * f[2] * g[8];
 	result[10] += 0.261169 * f[3] * g[7];
 	result[10] += -0.210261 * f[5] * g[15];
@@ -186,7 +186,7 @@ void sh_triple_product3(float f[16], float g[16], out float result[16]){
 	result[10] += 0.162868 * f[13] * g[7];
 	result[10] += 0.282095 * f[14] * g[0];
 	result[10] += -0.210261 * f[15] * g[5];
-	result[11] += -0.282095 * f[0] * g[13];
+	result[11] = -0.282095 * f[0] * g[13];
 	result[11] += -0.082589 * f[1] * g[8];
 	result[11] += -0.233597 * f[2] * g[7];
 	result[11] += -0.202301 * f[3] * g[6];
@@ -204,7 +204,7 @@ void sh_triple_product3(float f[16], float g[16], out float result[16]){
 	result[11] += -0.126157 * f[13] * g[6];
 	result[11] += 0.162868 * f[14] * g[5];
 	result[11] += 0.132981 * f[15] * g[4];
-	result[12] += 0.282095 * f[0] * g[12];
+	result[12] = 0.282095 * f[0] * g[12];
 	result[12] += 0.143048 * f[1] * g[7];
 	result[12] += 0.247767 * f[2] * g[6];
 	result[12] += 0.143048 * f[3] * g[5];
@@ -222,7 +222,7 @@ void sh_triple_product3(float f[16], float g[16], out float result[16]){
 	result[12] += 0.168209 * f[12] * g[6];
 	result[12] += -0.059471 * f[13] * g[5];
 	result[12] += -0.188063 * f[14] * g[4];
-	result[13] += -0.282095 * f[0] * g[11];
+	result[13] = -0.282095 * f[0] * g[11];
 	result[13] += -0.202301 * f[1] * g[6];
 	result[13] += -0.233597 * f[2] * g[5];
 	result[13] += -0.082589 * f[3] * g[4];
@@ -240,7 +240,7 @@ void sh_triple_product3(float f[16], float g[16], out float result[16]){
 	result[13] += -0.126157 * f[11] * g[6];
 	result[13] += -0.059471 * f[12] * g[5];
 	result[13] += 0.206013 * f[13] * g[4];
-	result[14] += 0.282095 * f[0] * g[10];
+	result[14] = 0.282095 * f[0] * g[10];
 	result[14] += 0.261169 * f[1] * g[5];
 	result[14] += 0.184674 * f[2] * g[4];
 	result[14] += 0.184674 * f[4] * g[2];
@@ -252,7 +252,7 @@ void sh_triple_product3(float f[16], float g[16], out float result[16]){
 	result[14] += 0.282095 * f[10] * g[0];
 	result[14] += 0.162868 * f[11] * g[5];
 	result[14] += -0.188063 * f[12] * g[4];
-	result[15] += -0.282095 * f[0] * g[9];
+	result[15] = -0.282095 * f[0] * g[9];
 	result[15] += -0.319865 * f[1] * g[4];
 	result[15] += -0.319865 * f[4] * g[1];
 	result[15] += 0.132981 * f[4] * g[11];

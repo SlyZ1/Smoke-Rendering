@@ -42,7 +42,7 @@ void UI::renderRender(){
 
     Label("Sigma_t");
     ImGui::DragFloat("##Sigma_t", &m_sigma_t);
-    m_sigma_t = std::max(m_sigma_t, 0.000f);
+    m_sigma_t = glm::max(m_sigma_t, 1.000f);
     Label("Background color");
     ImGui::ColorEdit3("##Background color", &backgroundColor.r);
 

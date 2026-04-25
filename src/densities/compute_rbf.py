@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from tqdm import tqdm
 from copy import copy
+import matplotlib.pyplot as plt
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("cuda" if torch.cuda.is_available() else "cpu")
@@ -12,16 +13,20 @@ def load_density(path):
     D = data[data.files[0]].squeeze(-1)
     D = np.transpose(D, (2, 1, 0))
     D = D.astype(np.float32)
+    counts, bins = np.histogram(D.flatten(), bins=200)
+    D /= D.max()
+    n_clamp = 100
+    threshold = np.partition(D.flatten(), -n_clamp)[-n_clamp]
+    D = np.clip(D, 0, threshold)
     D /= D.max()
     D.tofile("density.bin")
 
     D_t = copy(D)
-    D_t[D_t < 0.05] = 0
     X = np.indices(D.shape)
     X = X.reshape(3, -1).T
     distances = np.linalg.norm(X.reshape((D.shape[0], D.shape[1], D.shape[2], 3)) / np.array(D.shape) - [0.5,0.5,0.5], axis=-1)
     distances /= distances.max()
-    D_t = D_t + 0.01 * distances
+    #D_t = D_t + 0.01 * distances
     X = X.astype(np.float32) / np.array(D.shape)
 
     D_shape = D.shape
@@ -30,6 +35,11 @@ def load_density(path):
     print("\t-shape:", D.shape)
     print("\t-type:", D.dtype)
     print("\t-min-max:", D.min(), D.max())
+    print("\t-mean:", np.mean(D))
+    counts, bins = np.histogram(D.flatten(), bins=200)
+    plt.bar(bins[:-1], counts, width=np.diff(bins))
+    plt.yscale('log')  # log scale pour voir les petites valeurs
+    plt.show()
 
     X = torch.from_numpy(X).float().to(device)
     D_t = torch.from_numpy(D_t.flatten()).float().to(device)
@@ -44,8 +54,9 @@ def load_params(load_from_data, numRBF):
         R = torch.nn.Parameter(torch.from_numpy(params['R']).to(device))
         W = torch.nn.Parameter(torch.from_numpy(params['W']).to(device))
     else:
-        X_masked = X[D >= 0.1]
-        D_masked = D[D >= 0.1]
+        mask = D >= D.mean()
+        X_masked = X[mask]
+        D_masked = D[mask]
         indices = torch.linspace(0, X_masked.shape[0] - 1, numRBF).long()
         C = torch.nn.Parameter(X_masked[indices].float().to(device))
         R = torch.nn.Parameter((torch.rand(numRBF) * 0.05).to(device))
@@ -114,7 +125,7 @@ def optimize_rbfs(stepsize, X_, D_):
         optimizer.step()
 
         with torch.no_grad():
-            R.clamp_(0.02, 0.09)
+            R.clamp_(0.015, 0.1)
             W.clamp_min_(0.01)
     return WdotB, Res, loss
 
@@ -133,16 +144,17 @@ if __name__ == "__main__":
     C, R, W = load_params(load_from_data=False, numRBF=400)
     batchsize = 4096*16
     optimizer = torch.optim.Adam([
-        {'params': [W], 'lr': 0.007},
-        {'params': [C], 'lr': 0.007},
-        {'params': [R], 'lr': 0.007},
+        {'params': [W], 'lr': 0.005},
+        {'params': [C], 'lr': 0.005},
+        {'params': [R], 'lr': 0.005},
     ])
     stepsize = 10
     for step in range(500):
         WdotB, Res, loss = optimize_rbfs(stepsize=stepsize, X_=X, D_=D)
         pg = optimizer.param_groups
+        print(f"D_tilde max: {WdotB.max()}")
         print(f"step {(step + 1) * stepsize}, loss: {loss.item():.1f}, lrs: [{pg[0]['lr']:.3}, {pg[1]['lr']:.3}, {pg[2]['lr']:.3}]")
-        optimizer = update_lrs(optimizer, speed=0.01)
+        #optimizer = update_lrs(optimizer, speed=0.05)
         
         # Teleport
         if (step + 1) % 1 == 0:
@@ -158,4 +170,4 @@ if __name__ == "__main__":
         
         Res_P = D_original - WdotB
         Res_P[Res_P < 0] = 0
-        #save_data(Res_N, Res_P, WdotB, C, R, W)
+        save_data(Res_N, Res_P, WdotB, C, R, W)
