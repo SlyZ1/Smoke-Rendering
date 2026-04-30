@@ -33,12 +33,15 @@ layout(std430, binding = 0) buffer InputRBFs {
     RBF rbfs[];
 };
 
-uniform sampler2D jssTexture;
+layout(std430, binding = 1) buffer OutputJss {
+    vec4 jss[];
+};
 
 uniform Camera camera;
 uniform vec2 texSize;
 uniform uint frame;
 
+uniform sampler3D jTexture;
 uniform sampler3D densityTexture;
 uniform sampler3D densityTildeTexture;
 uniform ivec3 densityShape;
@@ -60,7 +63,7 @@ float one[16] = float[16](PI_4_SQRT, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 #pragma include "./rand.glsl"
 #pragma include "./intersections.glsl"
-#pragma include "../jss/sh.glsl"
+#pragma include "../sh/sh.glsl"
 
 #pragma FDECLARE
 // RAND.GLSL
@@ -96,7 +99,6 @@ float sampleDensity(vec3 pos, AABB box, sampler3D density){
 }
 
 float compute_rbf(RBF rbf, vec3 x){
-    
     float inside = length(x - rbf.c.xyz) / rbf.r;
     return rbf.w * exp(-inside*inside);
 }
@@ -105,39 +107,40 @@ bool rbfTooFar(RBF rbf, vec3 x){
     return length(rbf.c.xyz - x) > 3 * rbf.r;
 }
 
-vec3 getJssCoeff(int l, int i) {
-    vec2 uv = vec2((float(l) + 0.5) / float(numRBF), (float(i) + 0.5) / 16.0);
-    return texture(jssTexture, uv).rgb;
-}
-
 vec3 Jss(Ray ray, AABB box, inout NoiseData nd){
     vec3 u = aabbPos(ray.origin, box);
     float D = sampleDensity(ray.origin, box, densityTexture);
     float D_tilde = sampleDensity(ray.origin, box, densityTildeTexture);
     float factor = D / D_tilde;
-    factor = clamp(factor, 0., 10.);
-    //factor = 1;
+    factor = clamp(factor, 0., 100.);
     if (D_tilde < 1e-10) factor = 0;
-    //return vec3(texture(jssTexture, vec2(0.5, 0.5)).r) * 1000;
+
     vec3 result = vec3(0.);
     float y[16];
-    sh(normalize(-ray.dir), y);
-    for(int l = 0; l < numRBF; l++) {
-        RBF rbf = rbfs[l];
-        if (rbfTooFar(rbf, u)) continue;
+    if (false){
+        sh(normalize(-ray.dir), y);
+        for(int l = 0; l < numRBF; l++) {
+            RBF rbf = rbfs[l];
+            if (rbfTooFar(rbf, u)) continue;
 
-        float rbf_val = compute_rbf(rbf, u);
-        float jss_r[16];
-        float jss_g[16];
-        float jss_b[16];
-        for(int i = 0; i < 16; i++) {
-            vec3 coeff = getJssCoeff(l, i);
-            jss_r[i] = coeff.r;
-            jss_g[i] = coeff.g;
-            jss_b[i] = coeff.b;
+            float rbf_val = compute_rbf(rbf, u);
+            float jss_r[16];
+            float jss_g[16];
+            float jss_b[16];
+            for(int i = 0; i < 16; i++) {
+                vec3 coeff = jss[l * 16 + i].rgb;
+                jss_r[i] = coeff.r;
+                jss_g[i] = coeff.g;
+                jss_b[i] = coeff.b;
+            }
+            vec3 scatter = vec3(sh_dot(jss_r, y), sh_dot(jss_g, y), sh_dot(jss_b, y));
+            result += rbf_val * clamp(scatter, 0., 15.);
         }
-        vec3 scatter = vec3(sh_dot(jss_r, y), sh_dot(jss_g, y), sh_dot(jss_b, y));
-        result += rbf_val * clamp(scatter, 0., 15.);
+    }
+    else{
+        vec3 uvw = (ray.origin - box.min) / (box.max - box.min);
+        uvw = vec3(uvw.z, uvw.y, uvw.x);
+        result = texture(jTexture, uvw).rgb;
     }
     result *= factor;
     return result;
@@ -228,8 +231,8 @@ void main()
     NoiseData nd = NoiseData(bnoise1, seed);
 
     Ray ray;
-    ray.origin = camera.pos;
     ray.dir = camera.lookDir;
+    ray.origin = camera.pos;
     ray = fovRay(pos/* + randomInCircle_bn(bnoise1, bnoise2) / texSize.y*/, ray);
 
     FragColor = intersect(ray, nd);

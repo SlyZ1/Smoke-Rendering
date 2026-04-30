@@ -17,6 +17,7 @@ unsigned int frameCount = 0;
 unsigned int VBO, VAO, EBO;
 ShaderProgram mainProg;
 ShaderProgram jssComputeProg;
+ShaderProgram jComputeProg;
 
 GLuint blueNoiseTexture = 0;
 GLuint densityTexture = 0;
@@ -24,7 +25,8 @@ GLuint densityTildeTexture = 0;
 GLuint depthTableTexture = 0;
 GLuint aTableTexture = 0;
 GLuint bTableTexture = 0;
-GLuint jssTexture = 0;
+GLuint jssBuffer = 0;
+GLuint jTexture = 0;
 GLuint rbfBuffer = 0;
 
 const int BN_TEX = 0;
@@ -33,7 +35,7 @@ const int DENSITY_TILDE_TEX = 2;
 const int DEPTH_TEX = 3;
 const int A_TEX = 4;
 const int B_TEX = 5;
-const int JSS_TEX = 6;
+const int J_TEX = 6;
 
 float maxDensityMagnitude;
 vector<float> hgShValues;
@@ -189,16 +191,22 @@ void loadRbfs(){
     glBufferData(GL_SHADER_STORAGE_BUFFER, rbfs.size() * sizeof(RBF), rbfs.data(), GL_STATIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, rbfBuffer);
 
-    glDeleteTextures(1, &jssTexture);
-    glGenTextures(1, &jssTexture);
-    glBindTexture(GL_TEXTURE_2D, jssTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, numRBF, 16, 0, GL_RGBA, GL_FLOAT, nullptr);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glBindImageTexture(0, jssTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+    glDeleteBuffers(1, &jssBuffer);
+    glGenBuffers(1, &jssBuffer);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, jssBuffer);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, rbfs.size() * 16 * sizeof(glm::vec4), nullptr, GL_DYNAMIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, jssBuffer);
+
+    glDeleteTextures(1, &jTexture);
+    glGenTextures(1, &jTexture);
+    glBindTexture(GL_TEXTURE_3D, jTexture);
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, densityShape.x, densityShape.y, densityShape.z, 0, GL_RGBA, GL_FLOAT, nullptr);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindImageTexture(0, jTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 }
 
-void initMainProg(){
+void initShaders(){
     mainProg.use();
 
     glUniform1i(glGetUniformLocation(mainProg.id(), "numRBF"), rbfs.size());
@@ -216,12 +224,11 @@ void initMainProg(){
     glBindTexture(GL_TEXTURE_3D, densityTildeTexture);
     glUniform1i(glGetUniformLocation(mainProg.id(), "densityTildeTexture"), DENSITY_TILDE_TEX);
 
-    glActiveTexture(GL_TEXTURE0 + JSS_TEX);
-    glBindTexture(GL_TEXTURE_2D, jssTexture);
-    glUniform1i(glGetUniformLocation(mainProg.id(), "jssTexture"), JSS_TEX);
-}
+    glActiveTexture(GL_TEXTURE0 + J_TEX);
+    glBindTexture(GL_TEXTURE_3D, jTexture);
+    glUniform1i(glGetUniformLocation(mainProg.id(), "jTexture"), J_TEX);
 
-void initCompute(){
+
     jssComputeProg.use();
 
     glUniform1i(glGetUniformLocation(jssComputeProg.id(), "numRBF"), rbfs.size());
@@ -242,6 +249,22 @@ void initCompute(){
 
     glUniform1fv(glGetUniformLocation(jssComputeProg.id(), "hgSh"), 16, hgShValues.data());
     glUniform1fv(glGetUniformLocation(jssComputeProg.id(), "dirSh"), 16, dirShValues.data());
+
+
+    jComputeProg.use();
+
+    glUniform1i(glGetUniformLocation(jComputeProg.id(), "numRBF"), rbfs.size());
+    glUniform3i(glGetUniformLocation(jComputeProg.id(), "densityShape"), densityShape.x, densityShape.y, densityShape.z);
+
+    glActiveTexture(GL_TEXTURE0 + DENSITY_TEX);
+    glBindTexture(GL_TEXTURE_3D, densityTexture);
+    glUniform1i(glGetUniformLocation(jComputeProg.id(), "densityTexture"), DENSITY_TEX);
+
+    glActiveTexture(GL_TEXTURE0 + DENSITY_TILDE_TEX);
+    glBindTexture(GL_TEXTURE_3D, densityTildeTexture);
+    glUniform1i(glGetUniformLocation(jComputeProg.id(), "densityTildeTexture"), DENSITY_TILDE_TEX);
+
+
 }
 
 void loadData(){
@@ -250,8 +273,7 @@ void loadData(){
     loadShData();
     loadRbfs();
 
-    initMainProg();
-    initCompute();
+    initShaders();
 }
 
 void init(){
@@ -262,8 +284,12 @@ void init(){
     std::cerr << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
     std::cerr << "GLSL version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
 
+    jComputeProg.create();
+    jComputeProg.load(GL_COMPUTE_SHADER, "src/shaders/j/compute_j.glsl");
+    jComputeProg.link();
+
     jssComputeProg.create();
-    jssComputeProg.load(GL_COMPUTE_SHADER, "src/shaders/jss/compute_jss.glsl");
+    jssComputeProg.load(GL_COMPUTE_SHADER, "src/shaders/j/compute_jss.glsl");
     jssComputeProg.link();
 
     mainProg.create();
@@ -315,7 +341,17 @@ void computeJss(){
 
     int n = (rbfs.size() + 63) / 64;
     jssComputeProg.dispatch(n, 1, 1);
-    ShaderProgram::barrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
+    ShaderProgram::barrier(GL_SHADER_STORAGE_BARRIER_BIT);
+}
+
+void computeJ(){
+    jComputeProg.use();
+
+    GLuint w0Loc = glGetUniformLocation(jComputeProg.id(), "w0");
+    glUniform3f(w0Loc, camera.lookDir().x, camera.lookDir().y, camera.lookDir().z);
+
+    jComputeProg.dispatch((densityShape.x + 7) / 8, (densityShape.y + 7) / 8, (densityShape.z + 7) / 8);
+    ShaderProgram::barrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
 void render(){
@@ -357,8 +393,8 @@ void inputs(){
     if (app.keyPressedOnce(GLFW_KEY_R, frameCount)){
         mainProg.reload();
         jssComputeProg.reload();
-        initMainProg();
-        initCompute();
+        jComputeProg.reload();
+        initShaders();
         cout << "Shaders reloaded." << endl;
     }
 }
@@ -379,6 +415,7 @@ int main(){
 
         ui.render();
         computeJss();
+        computeJ();
         render();
         inputs();
 
